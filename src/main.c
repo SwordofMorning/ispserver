@@ -43,6 +43,7 @@
 #include <gdbus.h>
 #endif
 
+#include "server/isp_func.h"
 #if CONFIG_DBSERVER
 #include "db_monitor.h"
 #include "isp_func.h"
@@ -708,6 +709,10 @@ void *thread_func(void *arg) {
     init_engine(cam_id);
     while(1) {
       LOG_INFO("wait stream start event...\n");
+    // XJT debug
+    printf("-------------------------XJT try set Saturation to 0\n");
+    saturation_set(0);
+    
       wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_START, -1);
       LOG_INFO("wait stream start event success ...\n");
       rk_aiq_state_t aiq_state = rk_aiq_get_state();
@@ -718,6 +723,9 @@ void *thread_func(void *arg) {
       }
 
       LOG_INFO("wait stream stop event...\n");
+    // XJT debug
+    printf("-------------------------XJT try set Saturation to 0\n");
+    saturation_set(0);
       wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_STOP, -1);
       LOG_INFO("wait stream stop event success ...\n");
       if (aiq_state == AIQ_STATE_INVALID) {

@@ -28,6 +28,8 @@ LINK_DIRECTORIES(
 
 INCLUDE_DIRECTORIES(
     ${_INCLUDE_PATH_}
+    ${_INCLUDE_PATH_}/dbus-1.0/
+    ${_INCLUDE_PATH_}/glib-2.0/
     ${_SDK_PATH_}external/rkmedia/examples/
     ${_SDK_PATH_}external/rkmedia/include/rkmedia/
     ${_SDK_PATH_}external/camera_engine_rkaiq/include/common
