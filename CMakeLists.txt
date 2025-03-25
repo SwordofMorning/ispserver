@@ -37,6 +37,7 @@ INCLUDE_DIRECTORIES(
     ${_SDK_PATH_}external/camera_engine_rkaiq/include/iq_parser/
     ${_SDK_PATH_}external/linux-rga/include/
     ${_SDK_PATH_}external/isp2-ipc/interface/
+    ${_SDK_PATH_}external/isp2-ipc/common/
     ${_SDK_PATH_}external/CallFunIpc
 )
 
