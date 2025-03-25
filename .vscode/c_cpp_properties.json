@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/hdd/System/RV1126/RV1126_RV1109_LINUX_SDK_V2.2.5.1_20230530/external/rkmedia/examples/",
+                "/hdd/System/RV1126/RV1126_RV1109_LINUX_SDK_V2.2.5.1_20230530/external/rkmedia/include/rkmedia/",
+                "/hdd/System/RV1126/RV1126_RV1109_LINUX_SDK_V2.2.5.1_20230530/external/camera_engine_rkaiq/include/common/",
+                "/hdd/System/RV1126/RV1126_RV1109_LINUX_SDK_V2.2.5.1_20230530/external/isp2-ipc/interface/"
+            ],
+            "defines": [],
+            "compilerPath": "/hdd/System/RV1126/RV1126_RV1109_LINUX_SDK_V2.2.5.1_20230530/buildroot/output/rockchip_rv1126_rv1109/host/bin/arm-linux-gnueabihf-gcc",
+            "cStandard": "c11",
+            "cppStandard": "gnu++20",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
