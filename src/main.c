@@ -722,7 +722,6 @@ void *thread_func(void *arg) {
       }
 
       LOG_INFO("wait stream stop event...\n");
-    saturation_set(0);
       wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_STOP, -1);
       LOG_INFO("wait stream stop event success ...\n");
       if (aiq_state == AIQ_STATE_INVALID) {
