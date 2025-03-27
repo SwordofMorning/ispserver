@@ -17,4 +17,6 @@ TARGET_LINK_LIBRARIES(
     librga.so
     librkaiq.so
     libCallFunIpc.so
+    libjson-c.so
+    libmicrohttpd.so
 )

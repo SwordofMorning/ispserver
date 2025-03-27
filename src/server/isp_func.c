@@ -81,8 +81,8 @@ void reset_flow() {
 }
 
 void brightness_set(int level) {
-  if (!db_aiq_ctx || !g_stream_on)
-    return;
+  // if (!db_aiq_ctx || !g_stream_on)
+  //   return;
   pthread_mutex_lock(&db_aiq_ctx_mutex);
   rk_aiq_uapi_setBrightness(db_aiq_ctx,
                             (int)(level * 2.55)); // [0, 100]->[0, 255]
@@ -90,8 +90,8 @@ void brightness_set(int level) {
 }
 
 void contrast_set(int level) {
-  if (!db_aiq_ctx || !g_stream_on)
-    return;
+  // if (!db_aiq_ctx || !g_stream_on)
+  //   return;
   pthread_mutex_lock(&db_aiq_ctx_mutex);
   rk_aiq_uapi_setContrast(db_aiq_ctx,
                           (int)(level * 2.55)); // [0, 100]->[0, 255]
@@ -101,7 +101,6 @@ void contrast_set(int level) {
 void saturation_set(int level) {
   // if (!db_aiq_ctx || !g_stream_on)
   //   return;
-  printf("---------------------------------------xjt:saturation_set");
   pthread_mutex_lock(&db_aiq_ctx_mutex);
   rk_aiq_uapi_setSaturation(db_aiq_ctx,
                             (int)(level * 2.55)); // [0, 100]->[0, 255]
@@ -109,8 +108,8 @@ void saturation_set(int level) {
 }
 
 void sharpness_set(int level) {
-  if (!db_aiq_ctx || !g_stream_on)
-    return;
+  // if (!db_aiq_ctx || !g_stream_on)
+  //   return;
   pthread_mutex_lock(&db_aiq_ctx_mutex);
   rk_aiq_uapi_setSharpness(db_aiq_ctx, level); // [0, 100]
   pthread_mutex_unlock(&db_aiq_ctx_mutex);

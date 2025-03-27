@@ -35,6 +35,8 @@
 #include "../utils/log.h"
 #include "config.h"
 
+#include "utils/http_server.h"
+
 #if CONFIG_DBUS
 #if CONFIG_CALLFUNC
 #include "call_fun_ipc.h"
@@ -783,6 +785,25 @@ void signal_exit_handler(int sig) {
 }
 
 int main(int argc, char **argv) {
+    // xjt begin
+    struct MHD_Daemon *daemon;
+
+    daemon = MHD_start_daemon(MHD_USE_AUTO | MHD_USE_INTERNAL_POLLING_THREAD,
+        PORT, NULL, NULL,
+        &handle_request, NULL,
+        MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
+        MHD_OPTION_END);
+
+    if (daemon == NULL)
+    {
+        fprintf(stderr, "无法启动服务器\n");
+        return 1;
+    }
+    printf("服务器启动，监听端口: %d...\n", PORT);
+    
+    // xjt end
+
+
 #ifdef ENABLE_MINILOGGER
   enable_minilog = 1;
   __minilog_log_init(argv[0], NULL, false, false, "ispserver", "1.0.0");
@@ -872,6 +893,9 @@ int main(int argc, char **argv) {
     }
   }
 #endif
+    // xjt begin
+    MHD_stop_daemon(daemon);
+    // xjt end
   return 0;
 }
 
