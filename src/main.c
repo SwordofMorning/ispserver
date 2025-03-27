@@ -1,48 +1,150 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <microhttpd.h>
+#include <json-c/json.h>
 
-#include "rk_aiq_uapi_imgproc_ipc_ipc.h"
-#include "call_fun_ipc.h"
+#define PORT 8888
+#define POSTBUFFERSIZE 512
 
-#define DBUS_NAME                "rockchip.ispserver"
-#define DBUS_PATH                "/"
-#define DBUS_IF                  DBUS_NAME ".sysctl"
-#define SHARE_PATH               "."
+struct connection_info_struct {
+    char *data;
+    size_t size;
+};
 
-rk_aiq_sys_ctx_t* aiq_ctx = NULL;
-const char* sns_entity_name = "m01_b_imx335 1-001a";
-const char* iqfile = "/oem/etc/iqfiles";
-rk_aiq_working_mode_t work_mode = RK_AIQ_WORKING_MODE_NORMAL;
+// 处理POST数据
+static int post_iterator(void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
+                        const char *filename, const char *content_type,
+                        const char *transfer_encoding, const char *data, uint64_t off,
+                        size_t size) {
+    struct connection_info_struct *con_info = coninfo_cls;
 
-int main()
-{
-    call_fun_ipc_client_init(DBUS_NAME, DBUS_IF, DBUS_PATH, SHARE_PATH, 1);
-    aiq_ctx = rk_aiq_uapi_sysctl_init(sns_entity_name, iqfile, NULL, NULL);
-    printf("-----------------------------------------------------------------------------DEBUG\n");
-    XCamReturn ret = rk_aiq_uapi_sysctl_prepare(aiq_ctx, 2592, 1944, work_mode);
-    if (ret != XCAM_RETURN_NO_ERROR)
-    {
-        printf("rk_aiq_uapi_sysctl_prepare failed!\n");
-        return 0;
+    if (size > 0) {
+        char *new_data = realloc(con_info->data, con_info->size + size + 1);
+        if (!new_data)
+            return MHD_NO;
+
+        con_info->data = new_data;
+        memcpy(con_info->data + con_info->size, data, size);
+        con_info->size += size;
+        con_info->data[con_info->size] = '\0';
     }
-    else
-    {
-        printf("rk_aiq_uapi_sysctl_prepare Success!\n");
-        ret = rk_aiq_uapi_sysctl_start(aiq_ctx);
+
+    return MHD_YES;
+}
+
+// 解析JSON数据
+void parse_json(const char *json_str) {
+    struct json_object *parsed_json;
+    struct json_object *brightness;
+    struct json_object *contrast;
+    struct json_object *saturation;
+    struct json_object *sharpness;
+
+    parsed_json = json_tokener_parse(json_str);
+    if (parsed_json == NULL) {
+        printf("JSON解析错误!\n");
+        return;
     }
 
-    while (1)
-    {
+    if (!json_object_object_get_ex(parsed_json, "brightness", &brightness) ||
+        !json_object_object_get_ex(parsed_json, "contrast", &contrast) ||
+        !json_object_object_get_ex(parsed_json, "saturation", &saturation) ||
+        !json_object_object_get_ex(parsed_json, "sharpness", &sharpness)) {
+        printf("获取JSON字段失败!\n");
+        json_object_put(parsed_json);
+        return;
+    }
+
+    printf("接收到的数据:\n");
+    printf("brightness: %d\n", json_object_get_int(brightness));
+    printf("contrast: %d\n", json_object_get_int(contrast));
+    printf("saturation: %d\n", json_object_get_int(saturation));
+    printf("sharpness: %d\n", json_object_get_int(sharpness));
+
+    json_object_put(parsed_json);
+}
+
+// 请求处理回调
+static int handle_request(void *cls, struct MHD_Connection *connection,
+                        const char *url, const char *method,
+                        const char *version, const char *upload_data,
+                        size_t *upload_data_size, void **con_cls) {
+    if (NULL == *con_cls) {
+        struct connection_info_struct *con_info;
+        con_info = malloc(sizeof(struct connection_info_struct));
+        if (con_info == NULL)
+            return MHD_NO;
+        
+        con_info->data = NULL;
+        con_info->size = 0;
+        *con_cls = con_info;
+        return MHD_YES;
+    }
+
+    if (strcmp(method, "POST") == 0) {
+        struct connection_info_struct *con_info = *con_cls;
+
+        if (*upload_data_size != 0) {
+            if (post_iterator(con_info, MHD_POSTDATA_KIND, NULL, NULL, NULL, NULL,
+                            upload_data, 0, *upload_data_size) == MHD_NO)
+                return MHD_NO;
+            
+            *upload_data_size = 0;
+            return MHD_YES;
+        } else {
+            if (con_info->data) {
+                parse_json(con_info->data);
+            }
+        }
+    }
+
+    const char *response_str = "OK";
+    struct MHD_Response *response;
+    int ret;
+
+    response = MHD_create_response_from_buffer(strlen(response_str),
+                                             (void*)response_str,
+                                             MHD_RESPMEM_PERSISTENT);
+    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    MHD_destroy_response(response);
+
+    return ret;
+}
+
+// 请求完成回调
+static void request_completed(void *cls, struct MHD_Connection *connection,
+                            void **con_cls, enum MHD_RequestTerminationCode toe) {
+    struct connection_info_struct *con_info = *con_cls;
+
+    if (con_info) {
+        if (con_info->data)
+            free(con_info->data);
+        free(con_info);
+        *con_cls = NULL;
+    }
+}
+
+int main() {
+    struct MHD_Daemon *daemon;
+
+    daemon = MHD_start_daemon(MHD_USE_AUTO | MHD_USE_INTERNAL_POLLING_THREAD,
+                            PORT, NULL, NULL,
+                            &handle_request, NULL,
+                            MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
+                            MHD_OPTION_END);
+    if (daemon == NULL) {
+        fprintf(stderr, "无法启动服务器\n");
+        return 1;
+    }
+
+    printf("服务器启动，监听端口: %d...\n", PORT);
+
+    // 保持程序运行
+    while (1) {
         sleep(1);
-
-        // opMode_t mode;
-        // rk_aiq_uapi_getWBMode(aiq_ctx, &mode);
-        printf("Debug\n");
     }
 
-    if (aiq_ctx)
-    {
-        rk_aiq_uapi_sysctl_stop(aiq_ctx, false);
-        rk_aiq_uapi_sysctl_deinit(aiq_ctx);
-    }
-
+    MHD_stop_daemon(daemon);
     return 0;
 }
