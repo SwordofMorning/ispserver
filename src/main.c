@@ -723,7 +723,7 @@ void *thread_func(void *arg) {
 
       LOG_INFO("wait stream stop event...\n");
       // xjt begin
-      saturation_set(0);
+      // saturation_set(0);
       // xjt end
       wait_stream_event(isp_fd, CIFISP_V4L2_EVENT_STREAM_STOP, -1);
       LOG_INFO("wait stream stop event success ...\n");
